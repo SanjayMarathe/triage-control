@@ -274,7 +274,11 @@ export class TriageOrchestrator {
       run.agents.A6.phase = "failed";
       run.agents.A6.currentAction = message;
       for (const id of workerIds) {
-        if (run.agents[id].phase !== "completed") run.agents[id].phase = "failed";
+        // A downstream publication failure does not invalidate candidates the
+        // workers already produced. Preserve their truthful terminal state.
+        if (!["completed", "candidate_ready", "superseded"].includes(run.agents[id].phase)) {
+          run.agents[id].phase = "failed";
+        }
       }
     });
     this.appendLog(runKey, "A6", "SYSTEM", "stderr", `fail closed · ${message}`);

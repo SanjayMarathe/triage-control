@@ -170,7 +170,7 @@ async function githubStatus(): Promise<IntegrationStatus> {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const body = await response.json() as { object?: { sha?: string } };
     if (body.object?.sha !== expectedSha) throw new Error("pinned base SHA is stale");
-    return integration("GitHub", true, true, `${owner}/${repo}@${branch} writable token accepted; base SHA pinned`);
+    return integration("GitHub", true, true, `${owner}/${repo}@${branch} readable token accepted; base SHA pinned (write checked at publication)`);
   } catch (error) {
     return integration("GitHub", true, false, `repository probe failed: ${diagnostic(error)}`);
   }

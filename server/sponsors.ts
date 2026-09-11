@@ -310,6 +310,9 @@ export async function publishDraftPullRequest(run: AgentRun, candidate: PatchCan
   try {
     await jsonFetch(`${root}/git/refs`, { method: "POST", headers, body: JSON.stringify({ ref: `refs/heads/${branch}`, sha: baseRef.object.sha }) });
   } catch (error) {
+    if (String(error).includes("403")) {
+      throw new Error(`GitHub token cannot create a branch in ${owner}/${repo}; grant Contents: Read and write and Pull requests: Read and write`);
+    }
     if (!String(error).includes("422")) throw error;
   }
   const existing = await jsonFetch(`${root}/contents/${candidate.filePath}?ref=${encodeURIComponent(branch)}`, { headers });
