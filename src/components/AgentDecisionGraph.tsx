@@ -67,7 +67,7 @@ export function AgentDecisionGraph({ run, selected, onSelect }: { run: AgentRun;
     group.add(mesh);
     const halo = new THREE.Mesh(new THREE.RingGeometry(isCenter ? 17 : 11, isCenter ? 18 : 12, 48), new THREE.MeshBasicMaterial({ color: isCenter ? "#f5a623" : "#62d5a0", transparent: true, opacity: isSelected || isCenter ? 0.55 : 0.14, side: THREE.DoubleSide }));
     group.add(halo);
-    const label = new SpriteText(`${id}  ${node.label}`);
+    const label = new SpriteText(node.label);
     label.color = id === "A6" ? "#ffd78e" : "#e8ecea";
     label.textHeight = isCenter ? 6.5 : 5;
     label.position.set(0, isCenter ? 23 : 16, 0);
@@ -84,7 +84,7 @@ export function AgentDecisionGraph({ run, selected, onSelect }: { run: AgentRun;
 
   return (
     <div className="agent-graph-host" ref={host}>
-      <div className="graph-caption"><span>FIVE PARALLEL FIX VMS</span><i /> <span>A6 SYNTHESIS + PR</span></div>
+      <div className="graph-caption"><span>FIVE PARALLEL AGENT VMS</span><i /> <span>SYNTHESIZER + PR</span></div>
       {webgl ? (
         <ForceGraph3D
           ref={graphRef}
@@ -96,15 +96,16 @@ export function AgentDecisionGraph({ run, selected, onSelect }: { run: AgentRun;
           linkTarget="targetKey"
           nodeThreeObject={nodeObject}
           nodeThreeObjectExtend={false}
-          nodeLabel={(node: any) => `${node.agentId} · ${node.label} · ${node.status}`}
+          nodeLabel={(node: any) => `${node.label} · ${node.status}`}
           linkWidth={(link: any) => 0.8 + (link.score / 100) * 3}
           linkColor={(link: any) => link.proposedNext ? "#f5a623" : "#40504d"}
           linkOpacity={0.75}
           linkDirectionalArrowLength={4}
           linkDirectionalArrowRelPos={0.9}
-          linkDirectionalParticles={(link: any) => link.proposedNext ? 3 : 0}
-          linkDirectionalParticleWidth={2.5}
-          linkDirectionalParticleColor={() => "#f5a623"}
+          linkDirectionalParticles={(link: any) => link.proposedNext ? 5 : 2}
+          linkDirectionalParticleSpeed={(link: any) => link.proposedNext ? 0.018 : 0.008}
+          linkDirectionalParticleWidth={(link: any) => link.proposedNext ? 4 : 2}
+          linkDirectionalParticleColor={(link: any) => link.proposedNext ? "#f5a623" : "#62d5a0"}
           backgroundColor="#0b0e0f"
           showNavInfo={false}
           enableNodeDrag={false}
@@ -112,11 +113,11 @@ export function AgentDecisionGraph({ run, selected, onSelect }: { run: AgentRun;
           onNodeClick={(node: any) => onSelect(node.agentId)}
         />
       ) : (
-        <div className="graph-fallback" role="img" aria-label="Five fix agents connect to the A6 synthesis agent">
+        <div className="graph-fallback" role="img" aria-label="Five agents connect to the Synthesizer">
           <svg viewBox="0 0 700 560" aria-hidden="true">
-            {[90,185,280,375,470].map((y, index) => <line key={y} x1="155" y1={y} x2="515" y2="280" className={run.nextProposal?.agentId === `A${index + 1}` ? "leading" : ""} />)}
+            {[90,185,280,375,470].map((y, index) => <g key={y} className={run.nextProposal?.agentId === `A${index + 1}` ? "leading" : ""}><line x1="155" y1={y} x2="515" y2="280" /><circle className="connection-pulse" r={run.nextProposal?.agentId === `A${index + 1}` ? 5 : 3}><animateMotion dur={run.nextProposal?.agentId === `A${index + 1}` ? "1.1s" : "2.2s"} repeatCount="indefinite" path={`M155,${y} L515,280`} /></circle></g>)}
           </svg>
-          {(["A1", "A2", "A3", "A4", "A5", "A6"] as AgentId[]).map((id, index) => <button key={id} className={`${id === "A6" ? "center" : ""} ${id === selected ? "selected" : ""}`} style={id === "A6" ? undefined : { top: `${7 + index * 17}%` }} onClick={() => onSelect(id)}><b>{id}</b><span>{run.agents[id].strategy}</span></button>)}
+          {(["A1", "A2", "A3", "A4", "A5", "A6"] as AgentId[]).map((id, index) => <button key={id} className={`${id === "A6" ? "center" : ""} ${id === selected ? "selected" : ""}`} style={id === "A6" ? undefined : { top: `${7 + index * 17}%` }} onClick={() => onSelect(id)}><b>{run.agents[id].strategy}</b><span>{run.agents[id].phase.replaceAll("_", " ")}</span></button>)}
         </div>
       )}
       <div className="graph-legend"><span><i className="good" /> candidate ready</span><span><i className="lead" /> proposed next</span><span>click a node to inspect</span></div>

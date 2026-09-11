@@ -1,6 +1,6 @@
 {
   "name": "Triage Control · Parallel Fix Race",
-  "description": "A6 invokes five specialist fix agents in one RocketRide Wave, ranks their evidence, and returns the proposed remediation contract.",
+  "description": "The Synthesizer invokes Agents 1–5 in one RocketRide Wave, ranks their evidence, and returns the proposed remediation contract.",
   "version": 1,
   "source": "incident_input",
   "components": [
@@ -13,11 +13,11 @@
     {
       "id": "agent_a6",
       "provider": "agent_rocketride",
-      "name": "A6 · Synthesis and decision",
+      "name": "Synthesizer",
       "config": {
         "agent_description": "Coordinates five independent remediation agents, challenges their evidence, and selects the safest candidate for deterministic verification.",
         "instructions": [
-          "You are A6, the central remediation decision agent. The input is a privacy-safe incident JSON object with immutable repository source, captured actions, error shape, and memory evidence.",
+          "You are the Synthesizer, the central remediation decision agent. The input is a privacy-safe incident JSON object with immutable repository source, captured actions, error shape, and memory evidence.",
           "In your first wave, invoke agent_a1.run_agent, agent_a2.run_agent, agent_a3.run_agent, agent_a4.run_agent, and agent_a5.run_agent together. Emit them in the same tool_calls array so RocketRide executes them in parallel.",
           "Give every specialist the same incident context. Require strict PatchCandidate JSON with strategy, root_cause, file_path, replacement_plan, assertions, risks, and confidence.",
           "Compare applicability, assertion coverage, evidence provenance, minimality, risk control, and confidence calibration. Never claim Snyk, replay, or GitHub gates passed; those deterministic gates run after this pipeline.",
@@ -32,11 +32,11 @@
     {
       "id": "agent_a1",
       "provider": "agent_rocketride",
-      "name": "A1 · Minimal patch",
+      "name": "Agent 1",
       "config": {
         "agent_description": "Proposes the smallest applicable patch for the observed failure.",
         "instructions": [
-          "You are A1, the minimal-patch specialist. Diagnose only from the supplied immutable incident context.",
+          "You are Agent 1. Diagnose only from the supplied immutable incident context.",
           "Return one strict PatchCandidate JSON object. Prefer the smallest local change satisfying every captured replay assertion; state uncertainty and risks explicitly."
         ],
         "max_waves": 2,
@@ -48,11 +48,11 @@
     {
       "id": "agent_a2",
       "provider": "agent_rocketride",
-      "name": "A2 · Boundary normalization",
+      "name": "Agent 2",
       "config": {
         "agent_description": "Repairs malformed or optional values at their earliest owned boundary.",
         "instructions": [
-          "You are A2, the boundary-normalization specialist. Find the earliest owned boundary that permits the invalid runtime value.",
+          "You are Agent 2. Find the earliest owned boundary that permits the invalid runtime value.",
           "Return one strict PatchCandidate JSON object with a boundary-focused replacement plan, assertions, blast radius, risks, and calibrated confidence."
         ],
         "max_waves": 2,
@@ -64,11 +64,11 @@
     {
       "id": "agent_a3",
       "provider": "agent_rocketride",
-      "name": "A3 · Memory-guided play",
+      "name": "Agent 3",
       "config": {
         "agent_description": "Uses only verified HydraDB and Rote evidence when adapting a previous remediation.",
         "instructions": [
-          "You are A3, the memory-guided specialist. Inspect the supplied HydraDB recall and pinned Rote Play evidence.",
+          "You are Agent 3. Inspect the supplied HydraDB recall and pinned Rote Play evidence.",
           "Treat an unverified or absent memory match as a fresh hypothesis. Return one strict PatchCandidate JSON object and cite exact memory source identifiers used."
         ],
         "max_waves": 2,
@@ -80,11 +80,11 @@
     {
       "id": "agent_a4",
       "provider": "agent_rocketride",
-      "name": "A4 · Test first",
+      "name": "Agent 4",
       "config": {
         "agent_description": "Turns the captured failure into regression assertions before proposing a fix.",
         "instructions": [
-          "You are A4, the test-first specialist. Translate the exact captured action sequence and terminal error into regression assertions before proposing code.",
+          "You are Agent 4. Translate the exact captured action sequence and terminal error into regression assertions before proposing code.",
           "Return one strict PatchCandidate JSON object containing assertions, implementation plan, residual risks, and calibrated confidence."
         ],
         "max_waves": 2,
@@ -96,11 +96,11 @@
     {
       "id": "agent_a5",
       "provider": "agent_rocketride",
-      "name": "A5 · Type hardening",
+      "name": "Agent 5",
       "config": {
         "agent_description": "Eliminates the invalid runtime state with a narrow type or schema contract.",
         "instructions": [
-          "You are A5, the type-hardening specialist. Find the narrowest type or schema boundary that can make the observed invalid state unrepresentable.",
+          "You are Agent 5. Find the narrowest type or schema boundary that can make the observed invalid state unrepresentable.",
           "Return one strict PatchCandidate JSON object with contract change, compatibility impact, assertions, risks, and calibrated confidence."
         ],
         "max_waves": 2,
@@ -112,91 +112,91 @@
     {
       "id": "llm_a6",
       "provider": "llm_openai",
-      "name": "A6 OpenAI model",
+      "name": "Synthesizer model",
       "config": { "profile": "openai-4o-mini", "openai-4o-mini": { "apikey": "${ROCKETRIDE_OPENAI_KEY}" }, "parameters": {} },
       "control": [{ "classType": "llm", "from": "agent_a6" }]
     },
     {
       "id": "memory_a6",
       "provider": "memory_internal",
-      "name": "A6 working memory",
+      "name": "Synthesizer memory",
       "config": { "type": "memory_internal" },
       "control": [{ "classType": "memory", "from": "agent_a6" }]
     },
     {
       "id": "llm_a1",
       "provider": "llm_openai",
-      "name": "A1 OpenAI model",
+      "name": "Agent 1 model",
       "config": { "profile": "openai-4o-mini", "openai-4o-mini": { "apikey": "${ROCKETRIDE_OPENAI_KEY}" }, "parameters": {} },
       "control": [{ "classType": "llm", "from": "agent_a1" }]
     },
     {
       "id": "memory_a1",
       "provider": "memory_internal",
-      "name": "A1 working memory",
+      "name": "Agent 1 memory",
       "config": { "type": "memory_internal" },
       "control": [{ "classType": "memory", "from": "agent_a1" }]
     },
     {
       "id": "llm_a2",
       "provider": "llm_openai",
-      "name": "A2 OpenAI model",
+      "name": "Agent 2 model",
       "config": { "profile": "openai-4o-mini", "openai-4o-mini": { "apikey": "${ROCKETRIDE_OPENAI_KEY}" }, "parameters": {} },
       "control": [{ "classType": "llm", "from": "agent_a2" }]
     },
     {
       "id": "memory_a2",
       "provider": "memory_internal",
-      "name": "A2 working memory",
+      "name": "Agent 2 memory",
       "config": { "type": "memory_internal" },
       "control": [{ "classType": "memory", "from": "agent_a2" }]
     },
     {
       "id": "llm_a3",
       "provider": "llm_openai",
-      "name": "A3 OpenAI model",
+      "name": "Agent 3 model",
       "config": { "profile": "openai-4o-mini", "openai-4o-mini": { "apikey": "${ROCKETRIDE_OPENAI_KEY}" }, "parameters": {} },
       "control": [{ "classType": "llm", "from": "agent_a3" }]
     },
     {
       "id": "memory_a3",
       "provider": "memory_internal",
-      "name": "A3 working memory",
+      "name": "Agent 3 memory",
       "config": { "type": "memory_internal" },
       "control": [{ "classType": "memory", "from": "agent_a3" }]
     },
     {
       "id": "llm_a4",
       "provider": "llm_openai",
-      "name": "A4 OpenAI model",
+      "name": "Agent 4 model",
       "config": { "profile": "openai-4o-mini", "openai-4o-mini": { "apikey": "${ROCKETRIDE_OPENAI_KEY}" }, "parameters": {} },
       "control": [{ "classType": "llm", "from": "agent_a4" }]
     },
     {
       "id": "memory_a4",
       "provider": "memory_internal",
-      "name": "A4 working memory",
+      "name": "Agent 4 memory",
       "config": { "type": "memory_internal" },
       "control": [{ "classType": "memory", "from": "agent_a4" }]
     },
     {
       "id": "llm_a5",
       "provider": "llm_openai",
-      "name": "A5 OpenAI model",
+      "name": "Agent 5 model",
       "config": { "profile": "openai-4o-mini", "openai-4o-mini": { "apikey": "${ROCKETRIDE_OPENAI_KEY}" }, "parameters": {} },
       "control": [{ "classType": "llm", "from": "agent_a5" }]
     },
     {
       "id": "memory_a5",
       "provider": "memory_internal",
-      "name": "A5 working memory",
+      "name": "Agent 5 memory",
       "config": { "type": "memory_internal" },
       "control": [{ "classType": "memory", "from": "agent_a5" }]
     },
     {
       "id": "pipeline_output",
       "provider": "response_answers",
-      "name": "A6 decision output",
+      "name": "Synthesizer decision output",
       "config": { "laneName": "answers" },
       "input": [{ "lane": "answers", "from": "agent_a6" }]
     }

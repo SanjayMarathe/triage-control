@@ -20,12 +20,12 @@ import { sponsorMode } from "./runtime";
 import { rankCandidates } from "./scoring";
 
 export const AGENT_STRATEGIES: Record<AgentId, string> = {
-  A1: "Minimal patch",
-  A2: "Boundary normalization",
-  A3: "Memory-guided Play",
-  A4: "Test-first",
-  A5: "Type hardening",
-  A6: "Synthesis + PR",
+  A1: "Agent 1",
+  A2: "Agent 2",
+  A3: "Agent 3",
+  A4: "Agent 4",
+  A5: "Agent 5",
+  A6: "Synthesizer",
 };
 
 const secondsAgo = (seconds: number) => new Date(Date.now() - seconds * 1000).toISOString();

@@ -9,6 +9,7 @@ import { RocketRideConsole } from "../components/RocketRideConsole";
 import { StatusPill } from "../components/StatusPill";
 
 const phaseTone = (phase: string) => phase === "completed" || phase === "candidate_ready" ? "good" : phase === "failed" ? "bad" : phase === "superseded" ? "neutral" : "accent";
+const agentText = (text: string) => text.replace(/\bA([1-5])\b/g, "Agent $1").replace(/\bA6\b/g, "Synthesizer");
 
 export function AgentWorkflow({ data }: { data: BootstrapPayload }) {
   const [params] = useSearchParams();
@@ -56,28 +57,28 @@ export function AgentWorkflow({ data }: { data: BootstrapPayload }) {
       <div className="agent-workbench">
         <aside className="worker-inspector">
           <div className="pane-label">SELECTED NODE / LIVE STATE</div>
-          <div className={`agent-badge ${selected === "A6" ? "center" : ""}`}>{selected}</div>
+          <div className={`agent-badge ${selected === "A6" ? "center" : ""}`}>{selected === "A6" ? "S" : selected.slice(1)}</div>
           <span className="agent-strategy">{selectedAgent.strategy}</span>
           <StatusPill tone={phaseTone(selectedAgent.phase) as any}>{selectedAgent.phase.replaceAll("_", " ")}</StatusPill>
           <div className="agent-progress"><i style={{ width: `${selectedAgent.progress}%` }} /></div>
-          <p className="current-action">{selectedAgent.currentAction}</p>
+          <p className="current-action">{agentText(selectedAgent.currentAction)}</p>
           <dl className="property-grid compact">
             <div><dt>ROCKETRIDE VM</dt><dd>{selectedAgent.vm}</dd></div>
             <div><dt>STARTED</dt><dd>{selectedAgent.startedAt ? new Date(selectedAgent.startedAt).toLocaleTimeString() : "queued"}</dd></div>
             <div><dt>CANDIDATE</dt><dd>{selectedAgent.candidateId || "—"}</dd></div>
-            <div><dt>A6 WEIGHT</dt><dd>{selectedAgent.score !== undefined ? `${selectedAgent.score} / 100` : "pending"}</dd></div>
+            <div><dt>SYNTHESIZER WEIGHT</dt><dd>{selectedAgent.score !== undefined ? `${selectedAgent.score} / 100` : "pending"}</dd></div>
           </dl>
           {candidate && <div className="candidate-card"><span>PATCH CANDIDATE</span><strong>{candidate.title}</strong><p>{candidate.rootCause}</p><div><em>{candidate.changedLines} LINE{candidate.changedLines === 1 ? "" : "S"}</em><em>{candidate.assertions.length} ASSERTIONS</em></div></div>}
           <div className="node-list">
             <span>SELECT AGENT</span>
-            {(Object.keys(run.agents) as AgentId[]).map((id) => <button className={selected === id ? "active" : ""} onClick={() => selectAgent(id)} key={id}><b>{id}</b><span>{run.agents[id].strategy}</span><i className={`phase-dot ${run.agents[id].phase}`} /></button>)}
+            {(Object.keys(run.agents) as AgentId[]).map((id) => <button className={selected === id ? "active" : ""} onClick={() => selectAgent(id)} key={id}><b>{run.agents[id].strategy}</b><span>{run.agents[id].phase.replaceAll("_", " ")}</span><i className={`phase-dot ${run.agents[id].phase}`} /></button>)}
           </div>
         </aside>
         <section className="graph-pane"><AgentDecisionGraph run={run} selected={selected} onSelect={selectAgent} /></section>
         <aside className="agent-right-pane">
           <div className="right-tabs">
-            <button className={tab === "console" ? "active" : ""} onClick={() => setTab("console")}>VM CONSOLE <small>{selected}</small></button>
-            <button className={tab === "reasoning" ? "active" : ""} onClick={() => setTab("reasoning")}>A6 REASONING <small>R{run.decisionRevision}</small></button>
+            <button className={tab === "console" ? "active" : ""} onClick={() => setTab("console")}>VM CONSOLE <small>{selectedAgent.strategy}</small></button>
+            <button className={tab === "reasoning" ? "active" : ""} onClick={() => setTab("reasoning")}>SYNTHESIZER REASONING <small>R{run.decisionRevision}</small></button>
           </div>
           {tab === "console" ? <RocketRideConsole run={run} selectedAgent={selected} /> : <ReasoningLoop run={run} />}
         </aside>

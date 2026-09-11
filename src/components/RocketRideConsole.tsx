@@ -8,7 +8,7 @@ export function RocketRideConsole({ run, selectedAgent }: { run: AgentRun; selec
   const logs = run.logs.filter((entry) => entry.agentId === selectedAgent).sort((a, b) => a.seq - b.seq);
   const agent = run.agents[selectedAgent];
   return (
-    <section className="console-panel" aria-label={`${selectedAgent} RocketRide VM console`}>
+    <section className="console-panel" aria-label={`${agent.strategy} RocketRide VM console`}>
       <div className="console-toolbar">
         <div><i className="dot" /><strong>{agent.vm}</strong></div>
         <span>OUTPUT · FLOW · SSE</span>

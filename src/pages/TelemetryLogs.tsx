@@ -84,7 +84,7 @@ export function TelemetryLogs({ data }: { data: BootstrapPayload }) {
               {preceding.map((event, index) => <div key={event.id}><b>{String(index + 1).padStart(2, "0")}</b><p>{event.type} · {event.target} · {event.summary}</p></div>)}
               {preceding.length === 0 && <p className="muted-text">No preceding events in this bounded session window.</p>}
             </div>
-            <div className="patch-contract"><i className={canPatch ? "dot" : "dot muted"} /><div><strong>{canPatch ? "READY FOR AGENT PATCH" : "NOT A TERMINAL FAILURE"}</strong><p>{canPatch ? "Starts A1–A5 in parallel; A6 gates the winner." : "Choose the red console error row to continue."}</p></div></div>
+            <div className="patch-contract"><i className={canPatch ? "dot" : "dot muted"} /><div><strong>{canPatch ? "READY FOR AGENT PATCH" : "NOT A TERMINAL FAILURE"}</strong><p>{canPatch ? "Starts Agents 1–5 in parallel; the Synthesizer gates the winner." : "Choose the red console error row to continue."}</p></div></div>
             <button className="primary-button" disabled={!canPatch || pending} onClick={() => selected && void patch(selected)}>{pending ? <><span className="spinner" /> DISPATCHING ROCKETRIDE</> : <>PATCH WITH AGENTS <b>→</b></>}</button>
             {error && <p className="inline-error">{error}</p>}
           </>}

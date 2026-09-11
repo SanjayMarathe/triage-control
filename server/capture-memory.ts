@@ -28,9 +28,22 @@ function captureBaseUrl() {
   return (process.env.CAPTURE_MEMORY_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
 }
 
-async function captureFetch<T>(path: string, init?: RequestInit): Promise<T> {
+function targetOrigins() {
+  return new Set(
+    (process.env.CAPTURE_TARGET_ORIGINS || "http://localhost:3001,http://127.0.0.1:3001")
+      .split(",")
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
+function isTargetEvent(event: CaptureEvent) {
+  return targetOrigins().has(safeUrl(event.url).origin.toLowerCase());
+}
+
+async function captureFetch<T>(path: string, init?: RequestInit, timeoutMs = 10_000): Promise<T> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 10_000);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(`${captureBaseUrl()}${path}`, { ...init, signal: controller.signal });
     const body = await response.text();
@@ -158,7 +171,9 @@ export async function fetchCaptureSnapshot(): Promise<CaptureSnapshot> {
   const incidents: Incident[] = [];
 
   for (const detail of details) {
-    const normalized = detail.events.map((event, index) => toTelemetry(detail.session_id, event, index));
+    const scopedEvents = detail.events.filter(isTargetEvent);
+    if (scopedEvents.length === 0) continue;
+    const normalized = scopedEvents.map((event, index) => toTelemetry(detail.session_id, event, index));
     const failures = normalized.filter((event) => event.severity === "warning" || event.severity === "error");
     const terminal = normalized.filter((event) => event.terminal);
     events.push(...normalized);
@@ -179,9 +194,9 @@ export async function fetchCaptureSnapshot(): Promise<CaptureSnapshot> {
     sessions.push({
       id: detail.session_id,
       siteKey: first?.siteKey || "site:unobserved",
-      route: safeUrl(detail.events.at(-1)?.url).pathname,
+      route: safeUrl(scopedEvents.at(-1)?.url).pathname,
       startedAt: first?.eventTime || new Date().toISOString(),
-      eventCount: detail.event_count,
+      eventCount: scopedEvents.length,
       errorCount: failures.length,
       eventRate: Number((normalized.length / elapsedSeconds).toFixed(1)),
       state: terminal.length > 0 ? "incident_ready" : "live",
@@ -196,7 +211,7 @@ export async function fetchCaptureSnapshot(): Promise<CaptureSnapshot> {
 }
 
 export async function ingestCaptureSession(sessionId: string) {
-  return captureFetch<Record<string, unknown>>(`/sessions/${encodeURIComponent(sessionId)}/ingest`, { method: "POST" });
+  return captureFetch<Record<string, unknown>>(`/sessions/${encodeURIComponent(sessionId)}/ingest`, { method: "POST" }, 120_000);
 }
 
 export interface CaptureMemoryRecall {
