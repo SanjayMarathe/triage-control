@@ -1,0 +1,65 @@
+{
+  "name": "Triage Control · Parallel Fix Race",
+  "description": "One root RocketRide Wave spawns five fix agents in parallel and routes candidate contracts into the A6 synthesis and deterministic gate stage.",
+  "version": 1,
+  "source": {
+    "id": "triage-control",
+    "traceLevel": "summary"
+  },
+  "components": [
+    {
+      "id": "root_wave",
+      "provider": "agent_rocketride",
+      "config": {
+        "name": "Root parallel triage Wave",
+        "max_waves": 3,
+        "require_tool_call": true,
+        "instructions": "Gather immutable incident context, then invoke agent_a1 through agent_a5 concurrently with run_agent. Stream every structured PatchCandidate to agent_a6. Agents may not publish or merge code."
+      },
+      "input": { "incident": "$input" },
+      "control": { "next": ["agent_a1", "agent_a2", "agent_a3", "agent_a4", "agent_a5", "agent_a6"] }
+    },
+    {
+      "id": "agent_a1",
+      "provider": "agent_rocketride",
+      "config": { "name": "A1 Minimal Patch", "max_waves": 2, "require_tool_call": true, "instructions": "Return the smallest applicable PatchCandidate contract." },
+      "input": { "incident": "$root_wave.incident" },
+      "control": { "next": ["agent_a6"] }
+    },
+    {
+      "id": "agent_a2",
+      "provider": "agent_rocketride",
+      "config": { "name": "A2 Boundary Normalization", "max_waves": 2, "require_tool_call": true, "instructions": "Normalize malformed optional data at the earliest owned boundary and return a PatchCandidate." },
+      "input": { "incident": "$root_wave.incident" },
+      "control": { "next": ["agent_a6"] }
+    },
+    {
+      "id": "agent_a3",
+      "provider": "agent_rocketride",
+      "config": { "name": "A3 Memory-Guided Play", "max_waves": 2, "require_tool_call": true, "instructions": "Use HydraDB recall and adapt the pinned Rote Play to current inputs. Return fresh patch evidence." },
+      "input": { "incident": "$root_wave.incident" },
+      "control": { "next": ["agent_a6"] }
+    },
+    {
+      "id": "agent_a4",
+      "provider": "agent_rocketride",
+      "config": { "name": "A4 Test-First", "max_waves": 2, "require_tool_call": true, "instructions": "Encode the captured failure as a regression assertion before returning a PatchCandidate." },
+      "input": { "incident": "$root_wave.incident" },
+      "control": { "next": ["agent_a6"] }
+    },
+    {
+      "id": "agent_a5",
+      "provider": "agent_rocketride",
+      "config": { "name": "A5 Type Hardening", "max_waves": 2, "require_tool_call": true, "instructions": "Eliminate the invalid runtime state through a local type or schema boundary." },
+      "input": { "incident": "$root_wave.incident" },
+      "control": { "next": ["agent_a6"] }
+    },
+    {
+      "id": "agent_a6",
+      "provider": "agent_rocketride",
+      "config": { "name": "A6 Synthesis + Draft PR", "max_waves": 4, "require_tool_call": true, "instructions": "Continuously rank structured candidates with fixed factors. Call deterministic Snyk, sandbox replay, and draft-PR tools in order. Never claim a gate passed and never merge." },
+      "input": { "candidates": ["$agent_a1", "$agent_a2", "$agent_a3", "$agent_a4", "$agent_a5"] },
+      "control": { "next": [] }
+    }
+  ]
+}

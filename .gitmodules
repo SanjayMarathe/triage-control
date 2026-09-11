@@ -1,0 +1,3 @@
+[submodule "capture-memory"]
+	path = capture-memory
+	url = https://github.com/SanjayMarathe/capture-memory.git

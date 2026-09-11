@@ -1,0 +1,43 @@
+{
+  "name": "triage-control",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c yellow,cyan \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:server": "tsx watch server/index.ts",
+    "dev:web": "vite",
+    "build": "tsc --noEmit && vite build",
+    "start": "NODE_ENV=production tsx server/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@hydradb/sdk": "^2.1.4",
+    "diff": "latest",
+    "dotenv": "latest",
+    "express": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "react-force-graph-3d": "latest",
+    "react-router-dom": "latest",
+    "rocketride": "latest",
+    "three": "latest",
+    "three-spritetext": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/diff": "latest",
+    "@types/express": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@types/three": "latest",
+    "@vitejs/plugin-react": "latest",
+    "concurrently": "latest",
+    "tsx": "latest",
+    "typescript": "latest",
+    "vite": "latest",
+    "vitest": "latest"
+  }
+}

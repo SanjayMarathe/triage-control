@@ -1,0 +1,1 @@
+{"schema_version":1,"method":"triage-remediation","incident_id":"INC-FIXTURE","error_shape":"checkout.receipt.undefined","patch_hash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","snyk_status":"clean","replay_status":"passed","safe_to_surface":true,"next_action":"surface_verified_draft_only"}
