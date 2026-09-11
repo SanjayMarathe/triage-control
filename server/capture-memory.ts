@@ -5,6 +5,7 @@ type CaptureEvent = Record<string, unknown> & {
   kind?: string;
   t?: number;
   url?: string;
+  requestUrl?: string;
   sessionId?: string;
   target?: Record<string, unknown> | null;
 };
@@ -73,12 +74,12 @@ function targetLabel(event: CaptureEvent) {
     .filter(Boolean)
     .map(String);
   if (parts.length > 0) return parts.join("");
-  if (event.kind === "network_failure") return `${String(event.method || "GET")} ${safeUrl(event.url).pathname}`;
+  if (event.kind === "network_failure") return `${String(event.method || "GET")} ${safeUrl(event.requestUrl || event.url).pathname}`;
   return String(event.source || event.kind || "browser");
 }
 
 function normalizedErrorShape(event: CaptureEvent) {
-  const url = safeUrl(event.url);
+  const url = safeUrl(event.requestUrl || event.url);
   const message = String(event.message || event.statusText || "")
     .toLowerCase()
     .replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/g, "<uuid>")
