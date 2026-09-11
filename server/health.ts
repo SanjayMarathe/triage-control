@@ -1,4 +1,6 @@
 import { execFile } from "node:child_process";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { promisify } from "node:util";
 import { HydraDBClient } from "@hydradb/sdk";
 import type { IntegrationStatus } from "../shared/types";
@@ -30,20 +32,40 @@ function diagnostic(error: unknown) {
 async function rocketRideStatus(): Promise<IntegrationStatus> {
   const apiKey = process.env.ROCKETRIDE_APIKEY;
   const uri = process.env.ROCKETRIDE_URI;
-  if (!apiKey || !uri) return integration("RocketRide", false, false, "URI or runtime key missing");
+  const modelKey = process.env.ROCKETRIDE_OPENAI_KEY || process.env.OPENAI_API_KEY;
+  if (!apiKey || !uri || !modelKey) {
+    return integration("RocketRide", false, false, "URI, runtime key, or OpenAI model key missing");
+  }
+  type RocketRideProbeClient = {
+    connect: (credential?: string, options?: { timeout?: number }) => Promise<void>;
+    validate: (options: { pipeline: Record<string, unknown> }) => Promise<{ errors?: Array<{ message?: string }> }>;
+    disconnect: () => Promise<void>;
+  };
+  let client: RocketRideProbeClient | undefined;
   try {
     const sdk = (await import("rocketride")) as unknown as {
-      RocketRideClient: new (options: Record<string, unknown>) => {
-        connect: (credential?: string, options?: { timeout?: number }) => Promise<void>;
-        disconnect: () => Promise<void>;
-      };
+      RocketRideClient: new (options: Record<string, unknown>) => RocketRideProbeClient;
     };
-    const client = new sdk.RocketRideClient({ auth: apiKey, uri, persist: false, maxRetryTime: 20_000, requestTimeout: 20_000 });
+    client = new sdk.RocketRideClient({
+      auth: apiKey,
+      uri,
+      env: { ROCKETRIDE_OPENAI_KEY: modelKey },
+      persist: false,
+      maxRetryTime: 20_000,
+      requestTimeout: 20_000,
+    });
     await client.connect(apiKey, { timeout: 20_000 });
-    await client.disconnect();
-    return integration("RocketRide", true, true, `runtime WebSocket authenticated at ${uri}`);
+    const pipelinePath = resolve(process.env.ROCKETRIDE_PIPELINE_PATH || "./pipeline/triage.pipe");
+    const pipeline = JSON.parse(await readFile(pipelinePath, "utf8")) as Record<string, unknown>;
+    const validation = await client.validate({ pipeline });
+    if (validation.errors?.length) {
+      throw new Error(validation.errors.map((item) => item.message || "invalid component").join("; "));
+    }
+    return integration("RocketRide", true, true, `WebSocket authenticated; six-agent pipeline structurally valid at ${uri}`);
   } catch (error) {
-    return integration("RocketRide", true, false, `runtime rejected connection: ${diagnostic(error)}`);
+    return integration("RocketRide", true, false, `runtime or pipeline probe failed: ${diagnostic(error)}`);
+  } finally {
+    await client?.disconnect().catch(() => undefined);
   }
 }
 

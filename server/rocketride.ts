@@ -47,13 +47,18 @@ export async function startRocketRide(input: unknown, sink: EventSink): Promise<
 
   const apiKey = process.env.ROCKETRIDE_APIKEY;
   const uri = process.env.ROCKETRIDE_URI;
-  if (!apiKey || !uri) throw new Error("RocketRide URI and API key are required in live mode");
+  const modelKey = process.env.ROCKETRIDE_OPENAI_KEY || process.env.OPENAI_API_KEY;
+  if (!apiKey || !uri || !modelKey) throw new Error("RocketRide URI, runtime key, and OpenAI model key are required in live mode");
 
   const sdk = (await import("rocketride")) as unknown as {
+    Question: new (options?: { expectJson?: boolean }) => {
+      addContext: (context: unknown) => void;
+      addQuestion: (question: string) => void;
+    };
     RocketRideClient: new (options: Record<string, unknown>) => {
-      connect: () => Promise<void>;
+      connect: (credential?: string, options?: { timeout?: number }) => Promise<void>;
       use: (options: Record<string, unknown>) => Promise<Record<string, unknown> & { token: string }>;
-      send: (token: string, data: string, objinfo?: Record<string, unknown>, mimetype?: string) => Promise<unknown>;
+      chat: (options: { token: string; question: unknown; onSSE?: (type: string, data: Record<string, unknown>) => Promise<void> }) => Promise<unknown>;
       setEvents: (token: string, types: string[]) => Promise<unknown>;
       addMonitor?: (key: { token: string }, types: string[]) => Promise<unknown>;
       terminate: (token: string) => Promise<void>;
@@ -63,25 +68,40 @@ export async function startRocketRide(input: unknown, sink: EventSink): Promise<
   const client = new sdk.RocketRideClient({
     auth: apiKey,
     uri,
+    env: { ROCKETRIDE_OPENAI_KEY: modelKey },
     persist: true,
     maxRetryTime: 30_000,
     requestTimeout: 30_000,
     onEvent: async (event: unknown) => normalizeEvent(event, sink),
   });
-  await client.connect();
-  const response = await client.use({ filepath: process.env.ROCKETRIDE_PIPELINE_PATH || "./pipeline/triage.pipe", ttl: 3600 });
+  await client.connect(apiKey, { timeout: 20_000 });
+  const response = await client.use({
+    filepath: process.env.ROCKETRIDE_PIPELINE_PATH || "./pipeline/triage.pipe",
+    ttl: 3600,
+    threads: 6,
+    pipelineTraceLevel: "summary",
+    name: "Triage Control · A1–A5 → A6",
+    env: { ROCKETRIDE_OPENAI_KEY: modelKey },
+  });
   const token = String(response.token ?? "");
   if (!token) {
     await client.disconnect();
     throw new Error("RocketRide did not return a task token");
   }
   if (client.addMonitor) {
-    await client.addMonitor({ token }, ["task", "summary", "flow", "output", "sse"]);
+    await client.addMonitor({ token }, ["TASK", "SUMMARY", "FLOW", "OUTPUT", "SSE"]);
   } else {
     await client.setEvents(token, ["TASK", "SUMMARY", "FLOW", "OUTPUT", "SSE"]);
   }
+  const question = new sdk.Question({ expectJson: true });
+  question.addContext(input);
+  question.addQuestion("Run the five specialist agents in parallel, synthesize their evidence, and return the proposed remediation contract as JSON.");
   void client
-    .send(token, JSON.stringify(input), { name: "incident.json", pipelineTraceLevel: "summary" }, "application/json")
+    .chat({
+      token,
+      question,
+      onSSE: async (type, data) => normalizeEvent({ event: "apaevt_sse", body: { type, data } }, sink),
+    })
     .catch((error) => sink({ agentId: "A6", source: "SYSTEM", category: "stderr", message: `RocketRide send failed: ${error instanceof Error ? error.message : String(error)}` }));
   return {
     token,
